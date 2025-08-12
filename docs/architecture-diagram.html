@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesMaster & TeamHub Architecture</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --info: #17a2b8;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --bg-gradient: linear-gradient(135deg, #4a6fa5, #17a2b8);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: var(--bg-gradient);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5a84;
+            border-color: #3a5a84;
+        }
+        
+        .btn-info {
+            background-color: var(--info);
+            border-color: var(--info);
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+        
+        .diagram-container {
+            width: 100%;
+            overflow: auto;
+            padding: 1rem;
+        }
+        
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background-color: #e9ecef;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            border-radius: 4px 4px 0 0;
+            margin-right: 4px;
+        }
+        
+        .tab-btn:hover {
+            background-color: #d1d7dd;
+        }
+        
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 0 4px 4px 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .component-info {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .component-info h3 {
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .stat-card {
+            flex: 1 1 200px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            font-size: 1.2rem;
+            color: var(--secondary);
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                width: 100%;
+                margin-bottom: 0.25rem;
+                border-radius: 4px;
+            }
+            
+            .stat-card {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SalesMaster & TeamHub</h1>
+        <p>System Architecture Diagram</p>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Architecture Overview</h2>
+                <button id="fullscreen-btn" class="btn btn-info">Fullscreen</button>
+            </div>
+            <div class="card-body">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="full-architecture">Full Architecture</button>
+                    <button class="tab-btn" data-tab="mobile-app">Mobile App</button>
+                    <button class="tab-btn" data-tab="web-admin">Web Admin Panel</button>
+                    <button class="tab-btn" data-tab="backend">Backend Services</button>
+                </div>
+                
+                <div id="full-architecture" class="tab-content active">
+                    <div class="diagram-container" id="full-diagram"></div>
+                </div>
+                
+                <div id="mobile-app" class="tab-content">
+                    <div class="diagram-container" id="mobile-diagram"></div>
+                </div>
+                
+                <div id="web-admin" class="tab-content">
+                    <div class="diagram-container" id="web-diagram"></div>
+                </div>
+                
+                <div id="backend" class="tab-content">
+                    <div class="diagram-container" id="backend-diagram"></div>
+                </div>
+                
+                <div class="component-info" id="component-details">
+                    <h3>Component Details</h3>
+                    <p>Hover over components in the diagram to see details here.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>System Statistics</h2>
+            </div>
+            <div class="card-body">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Components</h3>
+                        <div class="value">12</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Services</h3>
+                        <div class="value">8</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Databases</h3>
+                        <div class="value">3</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>APIs</h3>
+                        <div class="value">15</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2023 SalesMaster & TeamHub Architecture Documentation</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.0.2/dist/mermaid.min.js"></script>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+        });
+        
+        // Component details for hover effect
+        const componentDetails = {
+            "MobileApp": "Native mobile application for sales representatives with offline capabilities and real-time updates.",
+            "WebAdmin": "Web-based admin panel for managers to monitor team performance and manage sales operations.",
+            "APIGateway": "Central entry point for all client requests, handling authentication and routing.",
+            "AuthService": "Manages user authentication, authorization, and session management.",
+            "SalesService": "Core service for managing sales data, orders, and customer information.",
+            "TeamService": "Handles team management, hierarchy, and performance tracking.",
+            "NotificationService": "Manages push notifications, emails, and in-app alerts.",
+            "ReportingService": "Generates analytics, reports, and data visualizations.",
+            "PostgreSQL": "Primary relational database for structured data storage.",
+            "MongoDB": "NoSQL database for flexible document storage and high-volume data.",
+            "Redis": "In-memory data store for caching and real-time data processing.",
+            "S3Storage": "Object storage for files, documents, and media assets.",
+            "WebsocketServer": "Enables real-time bidirectional communication between clients and server.",
+            "CloudInfra": "Cloud-based infrastructure for scalability and reliability."
+        };
+        
+        // Full Architecture Diagram
+        document.getElementById('full-diagram').innerHTML = `
+        <div class="mermaid">
+        graph TB
+            subgraph "Client Layer"
+                MobileApp["Mobile App<br>(iOS/Android)"]
+                WebAdmin["Web Admin Panel<br>(React.js)"]
+            end
+            
+            subgraph "API Layer"
+                APIGateway["API Gateway<br>(Express.js)"]
+            end
+            
+            subgraph "Service Layer"
+                AuthService["Authentication Service<br>(JWT)"]
+                SalesService["Sales Service"]
+                TeamService["Team Management Service"]
+                NotificationService["Notification Service"]
+                ReportingService["Reporting Service"]
+            end
+            
+            subgraph "Data Layer"
+                PostgreSQL[(PostgreSQL)]
+                MongoDB[(MongoDB)]
+                Redis[(Redis Cache)]
+                S3Storage[(S3 Storage)]
+            end
+            
+            subgraph "Real-time Layer"
+                WebsocketServer["WebSocket Server<br>(Socket.io)"]
+            end
+            
+            subgraph "Infrastructure"
+                CloudInfra["Cloud Infrastructure<br>(AWS/Azure)"]
+            end
+            
+            MobileApp -->|REST API| APIGateway
+            WebAdmin -->|REST API| APIGateway
+            MobileApp -->|WebSocket| WebsocketServer
+            WebAdmin -->|WebSocket| WebsocketServer
+            
+            APIGateway --> AuthService
+            APIGateway --> SalesService
+            APIGateway --> TeamService
+            APIGateway --> NotificationService
+            APIGateway --> ReportingService
+            
+            WebsocketServer --> SalesService
+            WebsocketServer --> TeamService
+            WebsocketServer --> NotificationService
+            
+            AuthService --> PostgreSQL
+            SalesService --> PostgreSQL
+            SalesService --> MongoDB
+            TeamService --> PostgreSQL
+            NotificationService --> Redis
+            NotificationService --> MongoDB
+            ReportingService --> PostgreSQL
+            ReportingService --> MongoDB
+            
+            SalesService --> S3Storage
+            TeamService --> S3Storage
+            
+            PostgreSQL -.-> CloudInfra
+            MongoDB -.-> CloudInfra
+            Redis -.-> CloudInfra
+            S3Storage -.-> CloudInfra
+            WebsocketServer -.-> CloudInfra
+            
+            classDef client fill:#4a6fa5,stroke:#333,stroke-width:1px,color:white;
+            classDef api fill:#17a2b8,stroke:#333,stroke-width:1px,color:white;
+            classDef service fill:#28a745,stroke:#333,stroke-width:1px,color:white;
+            classDef database fill:#ffc107,stroke:#333,stroke-width:1px,color:black;
+            classDef realtime fill:#dc3545,stroke:#333,stroke-width:1px,color:white;
+            classDef infra fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+            
+            class MobileApp,WebAdmin client;
+            class APIGateway api;
+            class AuthService,SalesService,TeamService,NotificationService,ReportingService service;
+            class PostgreSQL,MongoDB,Redis,S3Storage database;
+            class WebsocketServer realtime;
+            class CloudInfra infra;
+        </div>`;
+        
+        // Mobile App Diagram
+        document.getElementById('mobile-diagram').innerHTML = `
+        <div class="mermaid">
+        graph TB
+            subgraph "Mobile App Architecture"
+                MobileUI["UI Layer<br>(React Native)"]
+                MobileState["State Management<br>(Redux)"]
+                MobileAPI["API Client<br>(Axios)"]
+                MobileStorage["Local Storage<br>(SQLite)"]
+                MobileSync["Sync Manager"]
+                MobileNotif["Notification Handler<br>(Firebase)"]
+            end
+            
+            MobileUI --> MobileState
+            MobileState --> MobileAPI
+            MobileState --> MobileStorage
+            MobileAPI --> MobileSync
+            MobileSync --> MobileStorage
+            MobileNotif --> MobileState
+            
+            MobileAPI -->|REST| APIGateway["API Gateway"]
+            MobileNotif -->|Push| NotificationService["Notification Service"]
+            MobileSync -->|Sync| SalesService["Sales Service"]
+            
+            classDef mobile fill:#4a6fa5,stroke:#333,stroke-width:1px,color:white;
+            classDef external fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+            
+            class MobileUI,MobileState,MobileAPI,MobileStorage,MobileSync,MobileNotif mobile;
+            class APIGateway,NotificationService,SalesService external;
+        </div>`;
+        
+        // Web Admin Diagram
+        document.getElementById('web-diagram').innerHTML = `
+        <div class="mermaid">
+        graph TB
+            subgraph "Web Admin Architecture"
+                WebUI["UI Components<br>(React.js)"]
+                WebState["State Management<br>(Redux)"]
+                WebAPI["API Client<br>(Axios)"]
+                WebCharts["Data Visualization<br>(D3.js)"]
+                WebRealtime["Real-time Updates<br>(Socket.io Client)"]
+            end
+            
+            WebUI --> WebState
+            WebState --> WebAPI
+            WebState --> WebCharts
+            WebRealtime --> WebState
+            
+            WebAPI -->|REST| APIGateway["API Gateway"]
+            WebRealtime -->|WebSocket| WebsocketServer["WebSocket Server"]
+            
+            classDef web fill:#17a2b8,stroke:#333,stroke-width:1px,color:white;
+            classDef external fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
+            
+            class WebUI,WebState,WebAPI,WebCharts,WebRealtime web;
+            class APIGateway,WebsocketServer external;
+        </div>`;
+        
+        // Backend Diagram
+        document.getElementById('backend-diagram').innerHTML = `
+        <div class="mermaid">
+        graph TB
+            subgraph "Backend Architecture"
+                APIGateway["API Gateway<br>(Express.js)"]
+                AuthService["Authentication<br>(JWT)"]
+                SalesService["Sales Service"]
+                TeamService["Team Service"]
+                NotificationService["Notification Service"]
+                ReportingService["Reporting Service"]
+                WebsocketServer["WebSocket Server"]
+            end
+            
+            subgraph "Data Storage"
+                PostgreSQL[(PostgreSQL)]
+                MongoDB[(MongoDB)]
+                Redis[(Redis)]
+                S3Storage[(S3 Storage)]
+            end
+            
+            APIGateway --> AuthService
+            APIGateway --> SalesService
+            APIGateway --> TeamService
+            APIGateway --> NotificationService
+            APIGateway --> ReportingService
+            
+            AuthService --> PostgreSQL
+            SalesService --> PostgreSQL
+            SalesService --> MongoDB
+            TeamService --> PostgreSQL
+            NotificationService --> Redis
+            NotificationService --> MongoDB
+            ReportingService --> PostgreSQL
+            ReportingService --> MongoDB
+            
+            WebsocketServer --> SalesService
+            WebsocketServer --> TeamService
+            WebsocketServer --> NotificationService
+            
+            SalesService --> S3Storage
+            TeamService --> S3Storage
+            
+            classDef service fill:#28a745,stroke:#333,stroke-width:1px,color:white;
+            classDef database fill:#ffc107,stroke:#333,stroke-width:1px,color:black;
+            classDef gateway fill:#17a2b8,stroke:#333,stroke-width:1px,color:white;
+            classDef realtime fill:#dc3545,stroke:#333,stroke-width:1px,color:white;
+            
+            class APIGateway gateway;
+            class AuthService,SalesService,TeamService,NotificationService,ReportingService service;
+            class PostgreSQL,MongoDB,Redis,S3Storage database;
+            class WebsocketServer realtime;
+        </div>`;
+        
+        // Tab switching functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and content
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(button.dataset.tab).classList.add('active');
+                
+                // Re-render mermaid diagrams
+                mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+            });
+        });
+        
+        // Fullscreen functionality
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            const diagramContainer = document.querySelector('.card-body');
+            if (diagramContainer.requestFullscreen) {
+                diagramContainer.requestFullscreen();
+            } else if (diagramContainer.mozRequestFullScreen) {
+                diagramContainer.mozRequestFullScreen();
+            } else if (diagramContainer.webkitRequestFullscreen) {
+                diagramContainer.webkitRequestFullscreen();
+            } else if (diagramContainer.msRequestFullscreen) {
+                diagramContainer.msRequestFullscreen();
+            }
+        });
+        
+        // Add hover effect to diagram nodes
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const componentInfo = document.getElementById('component-details');
+                
+                document.querySelectorAll('g.node').forEach(node => {
+                    const nodeText = node.querySelector('text').textContent;
+                    const componentName = nodeText.split('<br>')[0];
+                    
+                    node.addEventListener('mouseenter', () => {
+                        for (const [key, value] of Object.entries(componentDetails)) {
+                            if (componentName.includes(key)) {
+                                componentInfo.innerHTML = `
+                                    <h3>${componentName}</h3>
+                                    <p>${value}</p>
+                                `;
+                                break;
+                            }
+                        }
+                        
+                        node.querySelector('rect').style.filter = 'brightness(1.2)';
+                        node.style.cursor = 'pointer';
+                    });
+                    
+                    node.addEventListener('mouseleave', () => {
+                        componentInfo.innerHTML = `
+                            <h3>Component Details</h3>
+                            <p>Hover over components in the diagram to see details here.</p>
+                        `;
+                        node.querySelector('rect').style.filter = '';
+                    });
+                });
+            }, 1000); // Give time for Mermaid to render
+        });
+    </script>
+</body>
+</html>
